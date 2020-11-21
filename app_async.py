@@ -1,8 +1,10 @@
 import os
+import requests
 # Import the async app instead of the regular one
 from slack_bolt.async_app import AsyncApp
-from blocks import build_uifw_team
-from models import setup_db, db, Employee
+from utils import get_user_id
+from blocks import build_uifw_team, build_uifw_ooo
+from models import OutOfOffice, setup_db, db, Employee
 
 database_url = "postgresql://localhost/diego"
 
@@ -11,18 +13,11 @@ app = AsyncApp(
     token=os.environ.get("DIEGO_SLACK_BOT_TOKEN"),
     signing_secret=os.environ.get("DIEGO_SLACK_SIGNING_SECRET")
 )
-
+# ***************** examples ************************
 @app.event("app_mention")
 async def event_test(body, say, logger):
     logger.info(body)
     await say("What's up?")
-
-@app.message("employees")
-async def message_employees(body, say, logger):
-        all_employees = Employee.query.all()
-        response = build_uifw_team(all_employees)
-        logger.info(body)
-        await say(blocks=response) 
     
 # Listens to incoming messages that contain "hello"
 @app.message("hello")
@@ -46,12 +41,6 @@ async def message_hello(message, say, logger):
     except Exception as e:
         logger.error(f"Error opening modal: {e}")
 
-@app.command("/rickybobby")
-async def repeat_text(ack, say, command):
-    # Acknowledge command request
-    await ack()
-    await say(f"{command['text']}")
-    
 @app.shortcut("uidod")
 async def action_button_click(ack, shortcut, client):
 # Acknowledge the shortcut request
@@ -84,6 +73,51 @@ async def action_button_click(ack, shortcut, client):
             ]
         }
     )
+
+# ********************* real shit ****************************
+
+@app.message("employees") #todo should this be a shortcut?
+async def message_employees(body, say, logger):
+        all_employees = Employee.query.all()
+        response = build_uifw_team(all_employees)
+        logger.info(body)
+        await say(blocks=response) 
+    
+    
+@app.command("/add") #todo create employee from slack profile
+async def add_team_member(ack, say, command, logger):
+    try:
+        team_member_id = get_user_id(command["text"])
+        print(team_member_id)
+        # Acknowledge command request
+        response = requests.get("https://slack.com/api/users.profile.get?token=xoxb-1499543051015-1511265275141-9l6Lx0ml1numbgFZw8oX0xfo&user=U01FU3PTE8G&pretty=1")
+        await ack()
+        await say(f"{command['text']}")
+    except Exception as e:
+        logger.error(f"Error adding team member: {e}")
+    
+@app.command("/rickybobby")
+async def repeat_text(ack, say, command):
+    # Acknowledge command request
+    await ack()
+    await say(f"{command['text']}")
+    
+
+@app.command("/ooo")
+async def out_of_office(ack, say, command, logger):
+    try:
+        employee_ooo_data = {}
+        employees = Employee.query.all()
+        for employee in employees:
+            employee_ooo_events = OutOfOffice.query.filter(OutOfOffice.employee_id == employee.id).all()
+            if len(employee_ooo_events):
+                employee_ooo_data[employee.id] = employee_ooo_events
+        response = build_uifw_ooo(employee_ooo_data, employees)
+        # Acknowledge command request
+        await ack()
+        await say(blocks=response)
+    except Exception as e:
+        logger.error(f"Error getting out of office events: {e}")
     
 # Initialize Flask app
 from flask import Flask, request

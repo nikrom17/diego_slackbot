@@ -40,6 +40,7 @@ class Employee(db.Model):
     birthday = Column(Date)
     avatar = Column(String)
     title = Column(String)
+    out_of_office = relationship("OutOfOffice")
 
     def __init__(self, name, birthday, avatar, title):
         self.name = name,
@@ -67,6 +68,44 @@ class Employee(db.Model):
             'title': self.title,
             
         }
+
+class OutOfOffice(db.Model):
+    __tablename__ = 'outofoffice'
+
+    id = Column(Integer, primary_key=True)
+    employee_id = Column(Integer, ForeignKey('employee.id'))
+    start = Column(Date)
+    end = Column(Date)
+    duration = Column(Integer)
+    reason = Column(String)
+
+    def __init__(self, employee_id, start, end, duration, reason="PTO"):
+        self.employee_id = employee_id,
+        self.start = start
+        self.end = end
+        self.duration = duration
+        self.reason = reason
+
+    def insert(self):
+        db.session.add(self)
+        db.session.commit()
+
+    def update(self):
+        db.session.commit()
+
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
+
+    def format(self):
+        return {
+            'id': self.id,
+            'employee_id': self.employee_id,
+            'start': self.start,
+            'end': self.end,
+            'duration': self.duration,
+            'reason': self.reason,
+        }
         
 # ---------------------------------------------------------------------------- #
 # Initialize Database
@@ -82,9 +121,21 @@ def addEmployeeData():
         )
         employee.insert()
 
+def addOutOfOfficeData():
+    for data in ooo_default_data:
+        employee = OutOfOffice(
+            data["employee_id"],
+            data["start"],
+            data["end"],
+            data["duration"],
+            data["reason"],
+        )
+        employee.insert()
+
 def initializeDb():
     print('****** Initializing DB ******')
     addEmployeeData()
+    addOutOfOfficeData()
    
 
 # ---------------------------------------------------------------------------- #
@@ -115,5 +166,36 @@ employee_default_data = [
         "birthday": "1991-10-17",
         "avatar": "https://ca.slack-edge.com/T02MFSUNZ-U8N13GWJJ-e15a9d26f56c-512",
         "title": "UI Software Tester",
+    },
+]
+
+ooo_default_data = [
+    {
+        "employee_id": 1,
+        "start": "2020-11-28",
+        "end": "2020-11-29",
+        "duration": 1,
+        "reason": "PTO",
+    },
+    {
+        "employee_id": 1,
+        "start": "2020-12-7",
+        "end": "2020-12-10",
+        "duration": 3,
+        "reason": "PTO",
+    },
+    {
+        "employee_id": 2,
+        "start": "2020-11-28",
+        "end": "2020-11-29",
+        "duration": 1,
+        "reason": "PTO",
+    },
+    {
+        "employee_id": 3,
+        "start": "2020-11-28",
+        "end": "2020-11-29",
+        "duration": 1,
+        "reason": "PTO",
     },
 ]
