@@ -24,7 +24,7 @@ def setup_db(flask_app):
     db.app = flask_app
     db.init_app(flask_app)
     db.create_all()
-    db_drop_and_create_all()
+    # db_drop_and_create_all()
 
 '''
 people
@@ -36,15 +36,15 @@ class Employee(db.Model):
     __tablename__ = 'employee'
 
     id = Column(Integer, primary_key=True)
+    slack_id = Column(String)
     name = Column(String)
-    birthday = Column(Date)
     avatar = Column(String)
     title = Column(String)
     out_of_office = relationship("OutOfOffice")
 
-    def __init__(self, name, birthday, avatar, title):
+    def __init__(self, slack_id, name, avatar, title):
+        self.slack_id = slack_id,
         self.name = name,
-        self.birthday = birthday
         self.avatar = avatar
         self.title = title
 
@@ -62,11 +62,10 @@ class Employee(db.Model):
     def format(self):
         return {
             'id': self.id,
+            'slack_id': self.slack_id,
             'name': self.name,
-            'birthday': self.birthday,
             'avatar': self.avatar,
             'title': self.title,
-            
         }
 
 class OutOfOffice(db.Model):
@@ -115,7 +114,6 @@ def addEmployeeData():
     for data in employee_default_data:
         employee = Employee(
             data["name"],
-            data["birthday"],
             data["avatar"],
             data["title"],
         )
@@ -145,25 +143,21 @@ def initializeDb():
 employee_default_data = [
     {
         "name": "Nik Roman",
-        "birthday": "1991-10-17",
         "avatar": "https://ca.slack-edge.com/T02MFSUNZ-U018Z7BA4R0-e74d75d65f24-512",
         "title": "React Engineer",
     },
     {
         "name": "Camille Douglass",
-        "birthday": "1991-10-17",
         "avatar": "https://ca.slack-edge.com/T02MFSUNZ-U02PHNLBU-4b6ae73e1653-512",
         "title": "React Engineer",
     },
     {
         "name": "Bryant Miano",
-        "birthday": "1991-10-17",
         "avatar": "https://ca.slack-edge.com/T02MFSUNZ-UHS120E8M-ac1f2511cef3-512",
         "title": "Technology Manager",
     },
         {
         "name": "Rob Probst",
-        "birthday": "1991-10-17",
         "avatar": "https://ca.slack-edge.com/T02MFSUNZ-U8N13GWJJ-e15a9d26f56c-512",
         "title": "UI Software Tester",
     },

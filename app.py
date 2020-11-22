@@ -1,7 +1,10 @@
 import os
 import requests
+from requests_oauthlib import OAuth2Session
 # Import the async app instead of the regular one
 from slack_bolt.async_app import AsyncApp
+from oAuth import slack_token, slack_signing_secret
+from api import slack_api, microsoft_api
 from utils import get_user_id
 from blocks import build_uifw_team, build_uifw_ooo
 from models import OutOfOffice, setup_db, db, Employee
@@ -10,8 +13,8 @@ database_url = "postgresql://localhost/diego"
 
 app = AsyncApp(
     name="Diego",
-    token=os.environ.get("DIEGO_SLACK_BOT_TOKEN"),
-    signing_secret=os.environ.get("DIEGO_SLACK_SIGNING_SECRET")
+    token=slack_token,
+    signing_secret=slack_signing_secret
 )
 # ***************** examples ************************
 @app.event("app_mention")
@@ -84,18 +87,51 @@ async def message_employees(body, say, logger):
         await say(blocks=response) 
     
     
-@app.command("/add") #todo create employee from slack profile
+@app.command("/add-uifw")
 async def add_team_member(ack, say, command, logger):
     try:
         team_member_id = get_user_id(command["text"])
-        print(team_member_id)
+        duplicate = Employee.query.filter(Employee.slack_id == team_member_id).all()
+        if not duplicate:
+            url = f"{slack_api}/users.profile.get?token={slack_token}&user={team_member_id}"
+            response = requests.get(url)
+            team_member_profile = response.json()
+            new_uifw_team_member = Employee(
+                team_member_id,
+                team_member_profile["profile"]["real_name"],
+                team_member_profile["profile"]["image_original"],
+                team_member_profile["profile"]["title"],
+            )
+            new_uifw_team_member.insert()
+            slackbot_response = f"{team_member_profile['profile']['real_name']} has been added to UIFW"
+        else:
+            if len(duplicate) >  1:
+                name = duplicate[0].name
+            else:
+                name = duplicate.name
+            slackbot_response = f"{name} is already a member of UIFW"
         # Acknowledge command request
-        response = requests.get("https://slack.com/api/users.profile.get?token=xoxb-1499543051015-1511265275141-9l6Lx0ml1numbgFZw8oX0xfo&user=U01FU3PTE8G&pretty=1")
         await ack()
-        await say(f"{command['text']}")
+        await say(slackbot_response)
     except Exception as e:
         logger.error(f"Error adding team member: {e}")
     
+@app.command("/remove-uifw")
+async def remove_team_member(ack, say, command, logger):
+    try:
+        user_id = get_user_id(command["text"])
+        team_member = Employee.query.filter(Employee.slack_id == user_id).all()
+        if team_member:
+            for member in team_member:
+                member.delete()
+            slackbot_response = f"That Backstopper was removed from UIFW" #todo fetch name or @user
+        else:
+            slackbot_response = f"That Backstopper isn't a member of UIFW" #todo fetch name or @user
+        # Acknowledge command request
+        await ack()
+        await say(slackbot_response)
+    except Exception as e:
+        logger.error(f"Error adding team member: {e}")
 @app.command("/rickybobby")
 async def repeat_text(ack, say, command):
     # Acknowledge command request

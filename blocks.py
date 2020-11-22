@@ -58,7 +58,7 @@ def build_uifw_ooo(employee_ooo_data, employees):
 			"type": "section",
 			"text": {
 				"type": "plain_text",
-				"text": "Here is the schedule out of office events for UIFW:",
+				"text": "Here is the scheduled out of office events for UIFW:",
 			}
 		},
     ]
