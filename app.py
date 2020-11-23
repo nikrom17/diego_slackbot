@@ -7,7 +7,7 @@ from oAuth import slack_token, slack_signing_secret
 from api import slack_api, microsoft_api
 from utils import get_user_id
 from blocks import build_uifw_team, build_uifw_ooo
-from models import OutOfOffice, setup_db, db, Employee
+from models import OutOfOffice, RickyBobby, setup_db, db, Employee
 
 database_url = "postgresql://localhost/diego"
 
@@ -116,6 +116,7 @@ async def add_team_member(ack, say, command, logger):
     except Exception as e:
         logger.error(f"Error adding team member: {e}")
     
+    
 @app.command("/remove-uifw")
 async def remove_team_member(ack, say, command, logger):
     try:
@@ -131,12 +132,16 @@ async def remove_team_member(ack, say, command, logger):
         await ack()
         await say(slackbot_response)
     except Exception as e:
-        logger.error(f"Error adding team member: {e}")
+        logger.error(f"Error removing team member: {e}")
+        
+        
 @app.command("/rickybobby")
-async def repeat_text(ack, say, command):
+async def current_rickyBobby(ack, say):
+    rickyBobby_data = RickyBobby.query.get(1)
+    team_member = Employee.query.get(rickyBobby_data.current)
     # Acknowledge command request
     await ack()
-    await say(f"{command['text']}")
+    await say(f"{team_member.name} is Ricky Bobby this week.")
     
 
 @app.command("/ooo")

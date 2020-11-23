@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, DateTime, Boolean, create_engine, ForeignKey
+from sqlalchemy import Column, String, Integer, ARRAY, create_engine, ForeignKey
 from sqlalchemy.orm import relationship
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.sql.sqltypes import Date
@@ -24,6 +24,7 @@ def setup_db(flask_app):
     db.app = flask_app
     db.init_app(flask_app)
     db.create_all()
+    initializeDb()
     # db_drop_and_create_all()
 
 '''
@@ -105,6 +106,40 @@ class OutOfOffice(db.Model):
             'duration': self.duration,
             'reason': self.reason,
         }
+    
+class RickyBobby(db.Model):
+    __tablename__ = 'ricky_bobby'
+
+    id = Column(Integer, primary_key=True)
+    order = Column("data", ARRAY(Integer))
+    current = Column(Integer)
+    previous = Column(Integer)
+    current_override = Column(Integer)
+
+    def __init__(self, order, current, previous, current_override):
+        self.order = order
+        self.current = current
+        self.previous = previous
+        self.current_override = current_override
+
+    def insert(self):
+        db.session.add(self)
+        db.session.commit()
+
+    def update(self):
+        db.session.commit()
+
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
+
+    def format(self):
+        return {
+            'order': self.order,
+            'current': self.current,
+            'previous': self.previous,
+            'current_override': self.current,
+        }
         
 # ---------------------------------------------------------------------------- #
 # Initialize Database
@@ -129,11 +164,22 @@ def addOutOfOfficeData():
             data["reason"],
         )
         employee.insert()
+        
+def addRickyBobbyData():
+    for data in rickyBobby_default_data:
+        employee = RickyBobby(
+            data["order"],
+            data["current"],
+            data["previous"],
+            data["current_override"],
+        )
+        employee.insert()
 
 def initializeDb():
     print('****** Initializing DB ******')
-    addEmployeeData()
+    # addEmployeeData()
     addOutOfOfficeData()
+    addRickyBobbyData()
    
 
 # ---------------------------------------------------------------------------- #
@@ -165,31 +211,40 @@ employee_default_data = [
 
 ooo_default_data = [
     {
-        "employee_id": 1,
+        "employee_id": 10,
         "start": "2020-11-28",
         "end": "2020-11-29",
         "duration": 1,
         "reason": "PTO",
     },
     {
-        "employee_id": 1,
+        "employee_id": 10,
         "start": "2020-12-7",
         "end": "2020-12-10",
         "duration": 3,
         "reason": "PTO",
     },
     {
-        "employee_id": 2,
+        "employee_id": 9,
         "start": "2020-11-28",
         "end": "2020-11-29",
         "duration": 1,
         "reason": "PTO",
     },
     {
-        "employee_id": 3,
+        "employee_id": 7,
         "start": "2020-11-28",
         "end": "2020-11-29",
         "duration": 1,
         "reason": "PTO",
+    },
+]
+
+rickyBobby_default_data = [
+    {
+        "order": [7, 10, 9, 6],
+        "current": 10,
+        "previous": 7,
+        "current_override": 0,
     },
 ]
