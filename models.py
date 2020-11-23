@@ -211,14 +211,14 @@ employee_default_data = [
 
 ooo_default_data = [
     {
-        "employee_id": 10,
+        "employee_id": 6,
         "start": "2020-11-28",
         "end": "2020-11-29",
         "duration": 1,
         "reason": "PTO",
     },
     {
-        "employee_id": 10,
+        "employee_id": 6,
         "start": "2020-12-7",
         "end": "2020-12-10",
         "duration": 3,
@@ -242,8 +242,8 @@ ooo_default_data = [
 
 rickyBobby_default_data = [
     {
-        "order": [7, 10, 9, 6],
-        "current": 10,
+        "order": [7, 6, 9, 10],
+        "current": 6,
         "previous": 7,
         "current_override": 0,
     },

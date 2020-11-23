@@ -44,7 +44,7 @@ async def message_hello(message, say, logger):
     except Exception as e:
         logger.error(f"Error opening modal: {e}")
 
-@app.shortcut("uidod")
+@app.shortcut("uidodds")
 async def action_button_click(ack, shortcut, client):
 # Acknowledge the shortcut request
     await ack()
@@ -79,11 +79,13 @@ async def action_button_click(ack, shortcut, client):
 
 # ********************* real shit ****************************
 
-@app.message("employees") #todo should this be a shortcut?
-async def message_employees(body, say, logger):
+@app.command("/uifw-team") #todo should this be a shortcut?
+async def message_employees(ack,  body, say, logger):
         all_employees = Employee.query.all()
         response = build_uifw_team(all_employees)
         logger.info(body)
+        # Acknowledge command request
+        await ack()
         await say(blocks=response) 
     
     
